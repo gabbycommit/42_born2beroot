@@ -400,3 +400,40 @@ man passwd          // details usage of passwd
 passwd hukhaw       // change user hukhaw password
 sudo passwd root    // change root password
 ```
+---
+
+# SSH
+
+## Configure SSH
+
+### Differences between SSHD config files
+| Path | Type | Configures | Used by |
+|---|---|---|---|
+| `/etc/ssh/ssh_config` | File | **Client** defaults for everyone on this machine | The `ssh` command |
+| `/etc/ssh/ssh_config.d/` | Folder | Extra client settings, included by the file above | The `ssh` command |
+| `/etc/ssh/sshd_config` | File | **Server** settings: port, who may log in, authentication rules | The `sshd` service |
+| `/etc/ssh/sshd_config.d/` | Folder | Extra server settings, included by the file above | The `sshd` service |
+
+### Config SSHD
+- `man sshd_config` for more details.
+- config files under `/etc/ssh/sshd_config.d` must *end with .conf*.
+
+*Editing the config:*
+```
+sudo nano /etc/ssh/sshd_config.d/sshd.conf
+```
+
+*Things to config:*
+```
+Port 4242
+PermitRootLogin no
+```
+> Before restart SSH, checking the config error with command `sudo sshd -t`. Otherwise, SSH may be crashed and will lock from VM.
+
+### Checking SSHD config
+| Command                                       | Core Function                                                                | Common Use Case                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `sudo sshd -t`                                | Test configuration file syntax for errors                                    | Before restarting the SSH service after editing configurations |
+| `sudo sshd -T`                                | Dump all fully parsed and active settings                                    | When verifying which parameters are currently applied          |
+| `sudo sshd -T \| grep -E "port|permitrootlogin"` | Filter parsed settings to check specific options (Port, PermitRootLogin)     | Quickly verifying specific SSH security configurations         |
+| `sudo systemctl status ssh`                   | Check the current runtime state, active status, PID, and recent service logs | To verify if the SSH service is running correctly after a change |
