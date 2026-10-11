@@ -336,6 +336,46 @@ Defaults    iolog_dir="/var/log/sudo"
 
 ---
 
+# User
+A user is an account on the system: a named identity that owns files, runs programs and has permissions. Every program that runs does so as some user, which is how Linux decides what it may touch.
+
+## Where user information is stored
+| File | Holds |
+|---|---|
+| `/etc/passwd` | The list of users (readable by everyone, **no passwords** despite the name) |
+| `/etc/shadow` | Password hashes and aging info (root only) |
+| `/etc/group` | The list of groups and their members |
+
+There are three kinds:
+| Kind | UID range (typical) | Purpose | Can log in? |
+|---|---|---|---|
+| **root** | 0 | The administrator | Yes (but SSH login is disabled in your project) |
+| **System users** | 1 to 999 | Accounts for services (for example the web server, or `sshd`) | No, usually have no shell |
+| **Regular users** | 1000 and up | Real people, like `hukhaw` | Yes |
+
+## How to add user
+> `man adduser` for more details.
+
+Debian has two tools, and they behave differently:
+
+| | **`adduser`** | **`useradd`** |
+|---|---|---|
+| Style | Friendly, interactive script (Debian-specific) | Low-level program, found on all Linux distros |
+| Creates home directory | **Yes** | **No**, unless you add `-m` (or the system default says so) |
+| Copies starter files from `/etc/skel` | Yes | Only with `-m` |
+| Asks for a password | **Yes**, right away | No: the account has no usable password until you run `passwd` |
+| Creates a matching group | Yes | Depends on the system setting |
+| Default shell | A proper login shell | May default to a basic `sh`, unless you give `-s` |
+| Good for | Typing at the terminal | Scripts and automation |
+
+## How to delete a user
+| Goal | Command |
+|---|---|
+| Delete the user, keep the home folder | `sudo deluser <username>` |
+| Delete the user **and** their home directory | `sudo deluser --remove-home <username>` |
+
+---
+
 # groups
 Every file on Linux has an owner. Imagine a server with 20 users. You want 5 of them (the web team) to edit the website files, and the other 15 to have no access.
 
