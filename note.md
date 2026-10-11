@@ -495,7 +495,12 @@ sudo passwd root    // change root password
 
 # Network
 
-## Terms
+## Port
+Our computer has one network address (called an IP address), but it may run many network programs at the same time: a web server, an SSH server, a database. When a message arrives from the network, how does the computer know which program it is for?
+
+That is what a port answers. A port is a number attached to every network message that says which program should receive it.
+
+### Terms
 | Term | Meaning |
 |---|---|
 | **IP address** | The network address of a machine (for example `10.0.2.15`) |
@@ -505,13 +510,7 @@ sudo passwd root    // change root password
 | **Open port** | A port with a service listening **and** nothing blocking it |
 | **Closed port** | A port where no service is listening |
 | **Protocol** | The rules a connection follows. The main two are **TCP** and **UDP** (below). |
-| **Firewall** | A filter that decides which ports (and traffic) are allowed through |
 | **Connection** | An ongoing conversation between two machines |
-
-## Port
-Our computer has one network address (called an IP address), but it may run many network programs at the same time: a web server, an SSH server, a database. When a message arrives from the network, how does the computer know which program it is for?
-
-That is what a port answers. A port is a number attached to every network message that says which program should receive it.
 
 ### The ranges of Port
 The ranges, as defined by IANA (the body that coordinates port numbers):
@@ -565,6 +564,19 @@ Every device on a network needs an address, like a postal address, so data knows
 - Example: 2001:0db8:0000:0000:0000:ff00:0042:8329
 - Under the hood it’s a 128-bit number, which gives roughly 3.4 × 10^38 addresses (a number so large that running out is not a realistic worry).
 
+## NAT
+NAT stands for Network Address Translation. It lets many devices share one address by having a middleman translate between the private side and the outside world.
+
+### Terms related to NAT
+| Term | Meaning |
+|---|---|
+| **Private address** | An address that only works inside a local network (for example `10.0.2.15`). We saw the ranges in the IPv4 lesson. |
+| **Public address** | An address reachable on the open internet |
+| **Translation** | The middleman rewrites the address on each packet as it passes through |
+| **Port forwarding** | A rule: "traffic arriving at this port on the outside goes to that port on this inside machine" |
+| **Host** | Your real computer |
+| **Guest** | The VM inside it |
+
 ---
 
 # SSH
@@ -607,6 +619,40 @@ PermitRootLogin no
 | `sudo sshd -T`                                | Dump all fully parsed and active settings                                    | When verifying which parameters are currently applied          |
 | `sudo sshd -T \| grep -E "port|permitrootlogin"` | Filter parsed settings to check specific options (Port, PermitRootLogin)     | Quickly verifying specific SSH security configurations         |
 | `sudo systemctl status ssh`                   | Check the current runtime state, active status, PID, and recent service logs | To verify if the SSH service is running correctly after a change |
+
+## Connect to VM SSH
+How they connect to VM SSH:
+```
+B or A  --->  Host IP : Host Port  --->  VirtualBox  --->  Guest IP : Guest Port (sshd in the VM)
+```
+### The Meaning VirtualBox port forwarding fields
+
+| Field | Meaning | Required? | Value for your project |
+|---|---|---|---|
+| **Protocol** | The type of connection. SSH uses **TCP**. | Yes | `TCP` |
+| **Host IP** | Which address on computer A the rule listens on | No | Blank (B or others can connect) or `127.0.0.1` (only A itself) |
+| **Host Port** | The port on computer A that you connect to | Yes | Any free port, for example `8080`, `4242` |
+| **Guest IP** | The address of the VM that receives the traffic | No | Blank (simplest) |
+| **Guest Port** | The port inside the VM where `sshd` listens | Yes | `4242` |
+
+### Step to Connect
+1. Close te VM.
+2. Select the VM, then Settings > Network > Adapter 1, and make sure it is NAT.
+3. Open Advanced > Port Forwarding and add a rule:
+      | Field | Value |
+      |---|---|
+      | Name | `ssh` |
+      | Protocol | TCP |
+      | Host IP | Blank (to connect from B) or `127.0.0.1` (only from A) |
+      | Host Port | `4242` (or any free port) |
+      | Guest IP | Blank |
+      | Guest Port | `4242` |
+4. Start the VM and keep the VM running.
+5. Connect 
+      | From where | Command |
+      |---|---|
+      | local (the one running the VM) | `ssh -p 4242 testuser@127.0.0.1` or `ssh -p 4242 testuser@localhost`|
+      | another computer on the same network | `ssh -p 4242 testuser@<A's IP address>` |
 
 ---
 
