@@ -73,6 +73,57 @@ Both measure amounts of data, but they count in different ways:
 
 ---
 
+# Hostname
+A hostname is the name of a computer on a network. An IP address like 10.0.2.15 is for machines, but names are easier for people to remember and tell apart. Your laptop, your VM and a server in a data center each have their own hostname.
+
+You see it in several places:
+
+- The shell prompt: in hukhaw@debian:~$, the part after the @ is the hostname.
+- Networking tools, such as when a machine announces itself on a network.
+
+> `man hostname` to check more info.
+
+## Naming rules
+| Rule | Detail |
+|---|---|
+| Allowed characters | Letters, digits and hyphens (`-`) |
+| Not allowed | Spaces, underscores, and most symbols |
+| Hyphen position | Not at the start or the end |
+| Case | Use **lowercase**. Hostnames are not case-sensitive in networking, but lowercase avoids confusion. |
+| Length | Keep it short. A single name component in DNS may be at most 63 characters. |
+
+## How to view your hostname
+| Command | Shows |
+|---|---|
+| `hostname` | The current hostname |
+| `hostnamectl` | The static, transient and pretty names, plus OS, kernel and virtualization info |
+| `cat /etc/hostname` | The static name stored on disk |
+| `cat /etc/hosts` | The local name-to-address table |
+
+## What is the difference for static, transiet and pretty in hostname
+| Type | What it is | Where it lives | Survives reboot? | Rules |
+|---|---|---|---|---|
+| **Static** | The "official" name the system sets at boot | `/etc/hostname` | **Yes** | Strict: lowercase ASCII letters, digits, hyphens, no spaces |
+| **Transient** | The name the kernel is using **right now**. This is what the plain `hostname` command prints. | In memory (the running kernel) | **No** | Same strict rules as static |
+| **Pretty** | A friendly display name for humans, for example "Hukhaw's Test Server" | `/etc/machine-info` (as far as I know) | Yes | Free-form: capitals, spaces and symbols are allowed |
+
+> Analogy: your name on your ID card is the static hostname. A nickname someone gives you for one evening is transient. The fancy title on your business card is pretty.
+
+## How to chnage hostname
+| Method | Command | Changes | Permanent? |
+|---|---|---|---|
+| **Recommended** | `sudo hostnamectl hostname <name>` | Pretty + static + transient | **Yes** |
+| Older form of the above | `sudo hostnamectl set-hostname <name>` | Same as above (documented in older man pages, may be only an alias on newer versions) | **Yes** |
+| Permanent name only | `sudo hostnamectl hostname --static <name>` | Static only (`/etc/hostname`) | **Yes**, but the live name stays old until reboot or until applied |
+| Live name only | `sudo hostnamectl hostname --transient <name>` | Transient only | **No**, lost at reboot |
+| Display name only | `sudo hostnamectl hostname --pretty "<Name>"` | Pretty only | Yes |
+| Temporary quick change | `sudo hostname <name>` | Transient only | **No**, lost at reboot |
+| Edit the file by hand | `sudo nano /etc/hostname`, then `sudo hostname -F /etc/hostname` | Static (file), then live (second command) | **Yes** |
+
+> After changing hostname, have to change the hostname in `/etc/hots`. Othervise, the sudo will be have warning "unable to resolve host", and host-base rulues could be affected. However, the warning is harmless, and the command still run.
+
+---
+
 # What is Logical Volume Manager(LVM)?
 It is a layer of software (built into Linux) that sits between the physical disk and your filesystems. It lets you treat storage like a flexible pool instead of fixed slices.
 
@@ -461,6 +512,18 @@ The ranges, as defined by IANA (the body that coordinates port numbers):
 | Analogy | A phone call (both sides confirm they're connected) | Dropping postcards in the mail |
 | Used for | SSH, web pages, email, file transfer | Video calls, games, DNS lookups |
 
+## IPv4 & IPv6
+Every device on a network needs an address, like a postal address, so data knows where to go. This address is called an IP address (IP = Internet Protocol). IPv4 and IPv6 are two versions of the same idea, with different formats and sizes. The “v” stands for version.
+
+### IPv4
+- Four numbers from 0 to 255, separated by dots (dotted decimal).
+- Example: 10.0.2.15. This is the address in the subject’s example output, and I believe it’s the default address VirtualBox gives a VM in NAT mode.
+- Under the hood it’s a 32-bit number, which gives about 4.3 billion possible addresses.
+
+### IPv6
+- Eight groups of hexadecimal digits, separated by colons.
+- Example: 2001:0db8:0000:0000:0000:ff00:0042:8329
+- Under the hood it’s a 128-bit number, which gives roughly 3.4 × 10^38 addresses (a number so large that running out is not a realistic worry).
 
 ---
 
@@ -507,3 +570,40 @@ PermitRootLogin no
 
 ---
 
+# UFW
+UFW stands for Uncomplicated Firewall. The Linux kernel does the real packet filtering (through tools called iptables/nftables, which are hard to read). Its model is simple:
+
+| Concept | Meaning |
+|---|---|
+| **Default policy** | What happens to traffic that matches no rule. UFW's usual default is to **deny incoming** and **allow outgoing**. |
+| **Rule** | An exception to the default, such as "allow incoming TCP on 4242" |
+| **Enabled / disabled** | UFW is installed but **inactive** until you turn it on |
+
+## UFW Installation 
+```
+sudo apt install ufw
+sudo ufw --version      // to see the ufw version
+sudo ufw status         // check the status, it should be inactive before you enable
+man ufw                 // check the ufw manual
+```
+
+## Allow Port and enable UFW
+```
+sudo ufw allow 4242     // allowing port 4242
+sudo ufw enable         // activate ufw and enabled on system startup
+sudo ufw status verbose // checking ufw status details, should be see the active details
+```
+
+## Usefull command for UFW
+| Check or action | Command |
+|---|---|
+| Is it active, and which rules exist? | `sudo ufw status` |
+| Defaults and logging level | `sudo ufw status verbose` |
+| Rules with numbers (needed for deleting) | `sudo ufw status numbered` |
+| **Delete a rule by number** | `sudo ufw delete <number>` |
+| **Delete a rule by its definition** | `sudo ufw delete allow 22/tcp` |
+| Does it start at boot? | `systemctl is-enabled ufw` |
+| Is the service running? | `systemctl status ufw` |
+| Does the port really listen? | `sudo ss -tunlp` |
+
+--- 
