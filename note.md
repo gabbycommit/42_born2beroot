@@ -402,7 +402,74 @@ sudo passwd root    // change root password
 ```
 ---
 
+# Network
+
+## Terms
+| Term | Meaning |
+|---|---|
+| **IP address** | The network address of a machine (for example `10.0.2.15`) |
+| **Port** | A number from **0 to 65535** that identifies one service on that machine |
+| **Service** | A program that offers something over the network (SSH, web server, database) |
+| **Listening** | A service is "listening" on a port when it is waiting for incoming connections there |
+| **Open port** | A port with a service listening **and** nothing blocking it |
+| **Closed port** | A port where no service is listening |
+| **Protocol** | The rules a connection follows. The main two are **TCP** and **UDP** (below). |
+| **Firewall** | A filter that decides which ports (and traffic) are allowed through |
+| **Connection** | An ongoing conversation between two machines |
+
+## Port
+Our computer has one network address (called an IP address), but it may run many network programs at the same time: a web server, an SSH server, a database. When a message arrives from the network, how does the computer know which program it is for?
+
+That is what a port answers. A port is a number attached to every network message that says which program should receive it.
+
+### The ranges of Port
+The ranges, as defined by IANA (the body that coordinates port numbers):
+
+| Range | Name | Use |
+|---|---|---|
+| 0 to 1023 | **Well-known ports** | Standard services (SSH, web, mail). On Linux, programs need special privileges to listen on these, traditionally root. |
+| 1024 to 49151 | **Registered ports** | Applications registered for specific uses. 4242 is in this range. |
+| 49152 to 65535 | **Dynamic / ephemeral ports** | Temporary ports for the **client** side of connections |
+
+### Common ports worth recognizing
+| Port | Service | Relevance to you |
+|---|---|---|
+| 22 | SSH (default) | The one you're moving to 4242 |
+| 80 | HTTP (web, unencrypted) | Your bonus lighttpd web server would use this by default |
+| 443 | HTTPS (web, encrypted) | Secure websites |
+| 53 | DNS (name lookups) | Your machine uses it constantly as a client |
+| 25 | SMTP (sending email) | Mail servers |
+| 3306 | MariaDB / MySQL | Your bonus database's default |
+
+> On Linux, a file called `/etc/services` lists many of these name-to-number mappings, so you can look them up yourself with `grep -w 22 /etc/services`.
+
+### Command to see port
+`sudo ss -tunlp`
+
+| Flag | Meaning |
+|---|---|
+| `-t` | Show **TCP** sockets |
+| `-u` | Show **UDP** sockets |
+| `-n` | Show **numbers** instead of translating them to names |
+| `-l` | Show only **listening** ones |
+| `-p` | Show which **process** owns each port (needs `sudo`) |
+
+## TCP and UDP
+| | **TCP** | **UDP** |
+|---|---|---|
+| Style | Careful: sets up a connection first, confirms delivery, resends lost pieces | Fast and simple: just sends, with no confirmation |
+| Analogy | A phone call (both sides confirm they're connected) | Dropping postcards in the mail |
+| Used for | SSH, web pages, email, file transfer | Video calls, games, DNS lookups |
+
+
+---
+
 # SSH
+Your Debian VM is a server, and you want to control it from another computer, typing commands as if you were sitting in front of it. That is called remote administration, and real servers in data centers are managed this way because nobody walks up to them with a keyboard.
+
+Before SSH, the common tool was Telnet. Telnet sends everything, including your password, as plain readable text. Anyone on the network path between you and the server could read it.
+
+SSH (Secure Shell) does the same job, but encrypts everything. SSH was created in the mid-1990s as a secure replacement for Telnet and similar tools, and the version used today is SSH-2.
 
 ## Configure SSH
 
@@ -437,3 +504,6 @@ PermitRootLogin no
 | `sudo sshd -T`                                | Dump all fully parsed and active settings                                    | When verifying which parameters are currently applied          |
 | `sudo sshd -T \| grep -E "port|permitrootlogin"` | Filter parsed settings to check specific options (Port, PermitRootLogin)     | Quickly verifying specific SSH security configurations         |
 | `sudo systemctl status ssh`                   | Check the current runtime state, active status, PID, and recent service logs | To verify if the SSH service is running correctly after a change |
+
+---
+
