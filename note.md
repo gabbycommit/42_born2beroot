@@ -691,3 +691,96 @@ sudo ufw status verbose // checking ufw status details, should be see the active
 | Does it start at boot? | `systemctl is-enabled ufw` |
 | Is the service running? | `systemctl status ufw` |
 | Does the port really listen? | `sudo ss -tunlp` |
+
+---
+
+# Cron
+cron is Linux’s scheduling service. You tell it “run this command at this time”, and it runs the command in the background without anyone being there.
+| Term | Meaning |
+|---|---|
+| **cron** | The background service (a daemon) that runs scheduled jobs |
+| **crontab** | "cron table": the file holding the schedule. Each line is one job. |
+| **Job** | One line in a crontab: a time pattern plus a command |
+
+## Command to check the cron manual
+| Command | What it covers |
+|---|---|
+| `man cron` | The cron service itself |
+| `man crontab` | The `crontab` command (edit, list, remove) |
+| `man 5 crontab` | The **file format**: the five time fields and special strings like `@reboot` |
+
+> The number 5 selects section 5 of the manual (file formats). Without it, man crontab shows the command’s page instead. For this project, man 5 crontab is the most useful one.
+
+## cron rules
+Each line has this format:
+```
+minute  hour  day  month  weekday  command
+```
+| Field | Range |
+|---|---|
+| Minute | 0 to 59 |
+| Hour | 0 to 23 |
+| Day of month | 1 to 31 |
+| Month | 1 to 12 |
+| Day of week | 0 to 7 (0 and 7 are both Sunday) |
+
+### Special symbols and examples:
+| Written | Runs |
+|---|---|
+| `* * * * *` | Every minute |
+| `*/10 * * * *` | Every 10 minutes |
+| `0 * * * *` | At the start of every hour |
+| `@reboot` | Once, each time the system boots (replaces the five fields) |
+
+## How to set up cron
+There are two places to put the schedule. Choose one, and don’t use both, or the script runs twice and you get duplicate broadcasts.
+| Where | Format | When to use |
+|---|---|---|
+| **Root's own crontab** (`sudo crontab -e`) | `time  command` | **Recommended.** Simplest, and the job already runs as root. |
+| **`/etc/crontab`** or a file in **`/etc/cron.d/`** | `time  user  command` (one extra field) | Optional alternative for system-wide jobs |
+
+### Option A: root’s crontab
+```
+sudo crontab -e
+```
+
+>The first time, it may ask which editor to use. Choose one you know, such as nano
+
+Lines to write:
+```
+@reboot           /home/hukhaw/monitoring.sh
+*/10 * * * *      /home/hukhaw/monitoring.sh
+```
+
+#### Other crontab commands:
+| Command | Does |
+|---|---|
+| `sudo crontab -l` | Lists root's current jobs |
+| `sudo crontab -e` | Edits them |
+| `sudo crontab -r` | **Deletes the whole crontab immediately, with no confirmation.** Avoid it. |
+
+### Option B: system files `/etc/cron.d`(optional)
+Same time pattern, but with a user field between the time and the command, because these files don’t belong to any one user:
+
+Lines to write:
+```
+@reboot           /home/hukahw/monitoring.sh
+*/10 * * * *      /home/hukhaw/monitoring.sh
+```
+
+> Remember: whichever option you choose, the script path must be the full path, and the script must contain no sudo.
+
+## Checking whether cron is active
+| Check | Command | What you want to see |
+|---|---|---|
+| Is the service running? | `systemctl status cron` | `active (running)` |
+| Short answer | `systemctl is-active cron` | `active` |
+| Starts at boot? | `systemctl is-enabled cron` | `enabled` |
+| Is my job installed? | `sudo crontab -l` | Your lines |
+| Did cron actually run it? | `sudo journalctl -u cron -n 20` | Entries mentioning your command |
+
+## Interupt cron
+| Method | Touches `monitoring.sh`? | Touches the crontab? |
+|---|---|---|
+| Comment the lines out in `sudo crontab -e` | No | Yes |
+| `sudo systemctl stop cron` | No | No |
