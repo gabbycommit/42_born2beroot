@@ -72,6 +72,3 @@ Rules:
 
 - *Evaluation*:
     - no snapshots may exist at the beginning of each evaluation
-
----
-

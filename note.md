@@ -691,5 +691,3 @@ sudo ufw status verbose // checking ufw status details, should be see the active
 | Does it start at boot? | `systemctl is-enabled ufw` |
 | Is the service running? | `systemctl status ufw` |
 | Does the port really listen? | `sudo ss -tunlp` |
-
---- 

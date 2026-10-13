@@ -17,10 +17,13 @@ total_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $2} END {print sum}')
 used_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $3} END {print sum}')
 percent_disk=$(awk -v $total_disk -v $used_disk 'BEGIN {printf ".0f", u/t*100}')
 
+#cpu load
+cpu_load=$(vmstat 1 2 | tail -1 | awk '{printf "%.1f", 100 - $15}')
+
 wall "#Architecture: $arch
 #Physical CPU: $fcpu
 #vCPU: $vcpu
 #Memory used: $used_ram/${total_ram}MB ($percent_ram%)
 #Disk Usage: $used_disk/$(($total_disk/1000))GB ($percent_disk%)
-
+#CPU load: $cpu_load%
 "
