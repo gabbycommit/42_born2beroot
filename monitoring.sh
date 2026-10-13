@@ -54,5 +54,5 @@ wall "#Architecture: $arch
 #TCP Connections: $tcp_connections ESTABLISHED
 #User log: $user_log
 #Network: IP
-#Sudo: $comd_count cmd
+#Sudo: $cmd_count cmd
 "
