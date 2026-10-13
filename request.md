@@ -53,6 +53,11 @@ Rules:
 
     - signature.txt
 
+    - Bonus
+        - install lighttpd, MariaDB, and PHP.
+        - setting up those services, and WordPress.
+        - try to connect them.
+
 
 - To understand:
     - *disk size*
