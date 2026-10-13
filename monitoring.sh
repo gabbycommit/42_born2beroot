@@ -17,8 +17,18 @@ total_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $2} END {print sum}')
 used_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $3} END {print sum}')
 percent_disk=$(awk -v $total_disk -v $used_disk 'BEGIN {printf ".0f", u/t*100}')
 
-#cpu load
+# cpu load
 cpu_load=$(vmstat 1 2 | tail -1 | awk '{printf "%.1f", 100 - $15}')
+
+# last boot
+last_boot=$(who -b | awk '{print $3, $4}')
+
+# lvm use
+nlvm=$(lsblk -o TYPE | grep -c "^lvm")
+is_lvm="no"
+if [ nlvm -ge 1 ]; then
+    is_lvm="yes"
+fi
 
 wall "#Architecture: $arch
 #Physical CPU: $fcpu
@@ -26,4 +36,6 @@ wall "#Architecture: $arch
 #Memory used: $used_ram/${total_ram}MB ($percent_ram%)
 #Disk Usage: $used_disk/$(($total_disk/1000))GB ($percent_disk%)
 #CPU load: $cpu_load%
+#Last boot: $last_boot
+#LVM use: $is_lvm
 "
