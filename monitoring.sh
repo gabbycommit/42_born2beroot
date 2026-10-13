@@ -30,6 +30,19 @@ if [ nlvm -ge 1 ]; then
     is_lvm="yes"
 fi
 
+# tcp connections
+tcp_connections=$(ss -tH state established | wc -l)
+
+# user log
+user_log=$(w -h | wc -l)
+
+# Network
+ip=$(hostname -I | awk '{print $1}')
+mac=$(ip addr | grep "link/ether" | awk '{print $2}')
+
+# sudo cmd count
+cmd_count=$(journalctl _COMM=sudo | grep "COMMAND" | wc -l)
+
 wall "#Architecture: $arch
 #Physical CPU: $fcpu
 #vCPU: $vcpu
@@ -38,4 +51,8 @@ wall "#Architecture: $arch
 #CPU load: $cpu_load%
 #Last boot: $last_boot
 #LVM use: $is_lvm
+#TCP Connections: $tcp_connections ESTABLISHED
+#User log: $user_log
+#Network: IP
+#Sudo: $comd_count cmd
 "
