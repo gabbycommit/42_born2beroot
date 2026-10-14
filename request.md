@@ -47,13 +47,13 @@ Rules:
         - leave only 4242 open in your virtual machine.
         - must be active when you launch your virtual machine.
 
-    - monitoring.sh
+    - *monitoring.sh*
         - written in bash.
         - refer to pdf.
 
-    - signature.txt
+    - *signature.txt*
 
-    - Bonus
+    - *Bonus*
         - install lighttpd, MariaDB, and PHP.
         - setting up those services, and WordPress.
         - try to connect them.
