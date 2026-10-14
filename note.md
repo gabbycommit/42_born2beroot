@@ -969,6 +969,8 @@ sudo ss -tunlp | grep "mariadb|mysql"
 > You want a version of 10.11 or newer, active (running), and a listener on 127.0.0.1:3306 only.
 
 ### MariaDB Secure Installation
+
+#### What is Secure Installation
 A fresh database install is set up for convenience, so it’s easy to get started. The mariadb-secure-installation script switches a few of those conveniences off before real use.
 | Item | Why it's a risk | What the script does |
 |---|---|---|
@@ -977,3 +979,7 @@ A fresh database install is set up for convenience, so it’s easy to get starte
 | **Test database** | A sample database that any user can read and write | Removes it |
 | **Root password / authentication** | The database's root account is the key to everything | Lets you set or confirm how root logs in |
 | **Reload privilege tables** | Changes might not apply until the server reads them again | Applies them now |
+
+#### Step of Secure Installation
+```
+```
