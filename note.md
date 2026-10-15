@@ -982,4 +982,123 @@ A fresh database install is set up for convenience, so it’s easy to get starte
 
 #### Step of Secure Installation
 ```
+sudp mariadb-secure-installation
 ```
+| Prompt | What it means | Sensible answer |
+|---|---|---|
+| Enter current password for root | The database's root account (**not** the system root). On Debian it normally has no password. | Press Enter |
+| Switch to unix_socket authentication | Log in to the database as root by being system root, no password | Either works. As far as I know, Debian already uses it. |
+| Change the root password | Set a password for the database root | Optional with unix_socket, but be ready to explain your choice |
+| Remove anonymous users | Deletes accounts that let anyone log in without a name | **Yes** |
+| Disallow root login remotely | Blocks database root from outside connections | **Yes** |
+| Remove test database | Deletes a sample database that anyone can access | **Yes** |
+| Reload privilege tables | Applies the changes now | **Yes** |
+
+### Checking After the Secure Installation
+| Check | Command | What you want to see |
+|---|---|---|
+| No anonymous users | `sudo mariadb -e "SELECT user, host FROM mysql.user;"` | No row where the `user` column is empty |
+| No test database | `sudo mariadb -e "SHOW DATABASES;"` | `test` is not in the list |
+| Listening on this machine only | `sudo ss -tunlp \| grep 3306` | The address is `127.0.0.1:3306` |
+| UFW has no 3306 rule | `sudo ufw status` | Only 4242 and 80 (each with its `(v6)` twin) |
+
+### Create WordPress Database and Account
+*Step 1: Open the database shell*:
+```
+sudo mariadb
+```
+You should see MariaDB [(none)]>.
+
+*Run following statements, one at a time*:
+Pick your own names and a strong password.
+```
+CREATE DATABASE wordpress_db;
+CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wp_user'@'localhost';
+```
+| Statement | What it does |
+|---|---|
+| `CREATE DATABASE` | Makes an empty database for WordPress |
+| `CREATE USER ... @'localhost'` | Makes an account that can only connect from this VM |
+| `GRANT ... ON wordpress_db.*` | Gives that account full rights on **this one database only** |
+| `FLUSH PRIVILEGES` | Makes the server re-read permissions |
+
+### CHECK after Created User and Grant Privileges
+```
+sudo mariadb -e "SHOW DATABASES;"
+sudo mariadb -e "SHOW GRANTS FOR 'wp_user'@'localhost';"
+mariadb -u wp_user -p wordpress_db
+```
+
+---
+
+## WordPress
+
+### WordPress Installation
+Since the `wget` will download things in current directory, so go to `/tmp` first.
+```
+cd /tmp
+wget https://wordpress.org/latest.tar.gz
+ls -lh latest.tar.gz  // to check the size of the file
+```
+
+### Extract it into the Web folder
+```
+sudo tar -xzf latest.tar.gz -C /var/www/html --strip-components=1
+```
+| Part | Meaning |
+|---|---|
+| `tar` | Archive tool |
+| `-x` | e**x**tract |
+| `-z` | The file is compressed with gzip |
+| `-f latest.tar.gz` | The file to read |
+| `-C /var/www/html` | Change into this folder first, so files land there |
+| `--strip-components=1` | The archive has one top folder, `wordpress/`. This drops it, so the files go **directly** into `/var/www/html` instead of `/var/www/html/wordpress/`. |
+
+### Set Owner to www-data
+Every file has an owner, a group, and permissions for three classes: owner, group, and everyone else (others). When user using `wget` to download file, the owner of the file will be the user. In order to pass the owner to `www-data`, you need to:
+
+```
+sudo chown -R www-data:www-data /var/www/html
+ls -l /var/www/html
+```
+> This command make www-data the owner (and group) of /var/www/html and everything inside it.
+
+| Part | Meaning |
+|---|---|
+| `chown` | **ch**ange **own**er |
+| `-R` | **R**ecursive: apply it to everything inside the folder too, not just the folder itself |
+| `www-data:www-data` | The new **owner** and the new **group**, written as `owner:group` |
+| `/var/www/html` | The place to change: the folder where WordPress now lives |
+
+### Create `wp-config.php`
+
+#### what is `wp-config.php`
+wp-config.php is WordPress’s settings file. It tells WordPress how to reach the database. WordPress is only PHP code, so on its own it has no idea that a database called wordpress_db exists, what the account is called, or what the password is. This file holds that information.
+
+#### Step to create `wp-config.php`
+
+```
+cd /var/www/html
+sudo -u www-data cp wp-config-sample.php wp-config.php
+sudo nano wp-config.php
+```
+Inside nano, find the database section (search with Ctrl+W, for example DB_NAME) and replace the placeholder values:
+
+| Setting | Value |
+|---|---|
+| `DB_NAME` | `wordpress_db` |
+| `DB_USER` | `wp_user` |
+| `DB_PASSWORD` | the password you set for `wp_user` |
+| `DB_HOST` | `localhost` (probably already set) |
+
+Then restrict who can read it, since it contains the database password:
+```
+sudo chmod 640 /var/www/html/wp-config.php
+ls -l /var/www/html/wp-config.php
+```
+> Then open http://127.0.0.1:<your host port>/ in your browser. You should see WordPress’s setup page (a language choice), not a database error. Setting uo with chosing langause, site name and so on.
+
+> Remove the `/var/www/html/index.lighttpd.html`. This is lighttpd’s default placeholder page, installed by the package so you’d see something right after installing. It has nothing to do with WordPress, and your site doesn’t need it
+
+> After that, check with command `mariadb -u wp_user -p wordpress_db -e "SHOW TABLES;"`
