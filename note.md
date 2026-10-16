@@ -1102,3 +1102,120 @@ ls -l /var/www/html/wp-config.php
 > Remove the `/var/www/html/index.lighttpd.html`. This is lighttpd’s default placeholder page, installed by the package so you’d see something right after installing. It has nothing to do with WordPress, and your site doesn’t need it
 
 > After that, check with command `mariadb -u wp_user -p wordpress_db -e "SHOW TABLES;"`
+
+---
+
+## fail2ban
+fail2ban is a program that runs in the background and does three things:
+
+1. Watches the logs of your services (SSH, WordPress and so on).
+2. Counts failed login attempts coming from each IP address.
+3. Bans an address that fails too many times, by adding a firewall rule that blocks it, and removes the ban after a set time.
+
+It doesn’t stop the attack program from trying. It cuts the connection, so the guessing can’t continue.
+
+### How it works, step by step
+```
+Attacker  →  SSH port  →  sshd logs "Failed password from 1.2.3.4"
+                                    ↓
+                          fail2ban reads the log
+                                    ↓
+                   Filter matches, count for 1.2.3.4 goes up
+                                    ↓
+                    Count reaches maxretry within findtime
+                                    ↓
+                  Action: add a firewall rule blocking 1.2.3.4
+                                    ↓
+                  After bantime: the rule is removed (unban)
+```
+Notice it works after the fact, from log lines. The first few attempts always go through, and the ban comes only after the limit is reached.
+
+### Where its files live
+| Path | Role |
+|---|---|
+| `/etc/fail2ban/jail.conf` | The default settings. **Don't edit it**, since a package update may overwrite it. |
+| `/etc/fail2ban/jail.d/` | A folder for your own override files, the same "drop-in" idea as `sudoers.d` and `sshd_config.d` |
+| `/etc/fail2ban/jail.local` | Another place for your own settings. It overrides `jail.conf`. |
+| `/etc/fail2ban/filter.d/` | The filters (what counts as a failed login) |
+| `fail2ban-client` | The command to inspect and control it while it runs |
+
+### Limitations
+1. It doesn’t prevent the first attempts. Guesses up to the limit still get through.
+2. A slow or distributed attack can slip past. If a thousand different addresses try one guess each, none reaches the limit. fail2ban counts per address.
+3. It can ban the wrong person. Your own mistyped passwords count too. On your VM, as I mentioned, everything from your host computer appears as the same address (10.0.2.2), so failing the login a few times bans your own host from SSH.
+4. It isn’t a substitute for a strong password. If the correct password is guessed within the limit, fail2ban can’t help.
+5. It depends on the logs. If a service doesn’t log failures, or logs them in an unexpected format, fail2ban sees nothing. That’s why it’s worth checking that the SSH jail really reads your logs.
+
+### Terms to Know
+| Term | Meaning |
+|---|---|
+| **Jail** | One protection rule set for one service, such as "protect SSH". Each jail can be turned on or off. |
+| **Filter** | A pattern that recognizes a **failed login** line in a log |
+| **Action** | What to do when a ban is triggered, usually "add a firewall rule" |
+| **Ban** | Blocking an address |
+| **Unban** | Removing the block, either automatically after the ban time or by hand |
+| **`maxretry`** | How many failures are allowed before a ban |
+| **`findtime`** | The time window in which those failures are counted |
+| **`bantime`** | How long a ban lasts |
+| **`ignoreip`** | Addresses that are never banned (a safe list) |
+
+### `fail2ban` Installation
+```
+sudo apt install fail2ban
+systemctl status fail2ban
+```
+### Checking Active Jails
+```
+sudo fail2ban-client status
+```
+
+### The problem to fix: the port
+Check with the commnad `grep -n -A8 '^\[sshd\]' /etc/fail2ban/jail.conf`, you will see the `port=ssh`, which *cover port 22 not 4242*. So we have to change it with .config.
+
+```
+sudo nano /etc/fail2ban/jail.d/custom.local
+```
+
+with the content:
+```
+[sshd]
+port = 4242
+```
+
+### Check and Apply
+```
+sudo fail2ban-client -t           // config test
+sudo systemctl restart fail2ban   // restart fail2ban
+sudo fail2ban-client status sshd  // check the jail status
+```
+
+### Safe ban test
+A ban test checks that `fail2ban` can really *block an address*, and that the block applies to the right port. The normal way to trigger a ban is to fail several `SSH` logins from the same address. That’s unsafe on your VM, because every connection from your host computer looks like the same address, `10.0.2.2`. You’d ban your own host and lose your SSH access.
+
+The *safe* version doesn’t wait for failures. It tells fail2ban by hand: “ban this address now”, and the address is a fake one that doesn’t belong to anyone, so you can’t lock yourself out. Then you look at the firewall rules to see whether the ban was created correctly, and you undo it.
+
+```
+sudo fail2ban-client set sshd banip 203.0.113.5
+sudo nft list ruleset | grep -i -B2 -A2 4242
+sudo fail2ban-client set sshd unbanip 203.0.113.5
+```
+
+| # | Command | Part | Meaning |
+|---|---|---|---|
+| 1 | `sudo fail2ban-client set sshd banip 203.0.113.5` | `sudo` | fail2ban's control socket needs root |
+| | | `fail2ban-client` | The tool that talks to the running fail2ban |
+| | | `set sshd banip` | Change the `sshd` jail by **banning an IP** |
+| | | `203.0.113.5` | The fake address to ban (reserved for documentation examples, so it's safe) |
+| 2 | `sudo nft list ruleset \| grep -i -B2 -A2 4242` | `nft list ruleset` | Prints **all** firewall rules held by nftables |
+| | | `\|` | Passes that long output to `grep` |
+| | | `grep -i` | Search, ignoring upper/lower case |
+| | | `-B2 -A2` | Also show 2 lines **B**efore and 2 lines **A**fter each match |
+| | | `4242` | The text to look for (your SSH port) |
+| 3 | `sudo fail2ban-client set sshd unbanip 203.0.113.5` | `unbanip` | **Removes** the ban from step 1 (the rest is the same as command 1) |
+
+*What each command is for:*
+| # | Purpose | What you expect to see |
+|---|---|---|
+| 1 | **Cause**: create a ban by hand | It prints `1` (one address banned) |
+| 2 | **Observe**: read the firewall rules | A rule with `tcp dport 4242` and the banned-address set, which proves the ban covers your SSH port |
+| 3 | **Clean up**: undo the ban | It prints `1` (one address unbanned) |
