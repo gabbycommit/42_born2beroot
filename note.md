@@ -1,4 +1,4 @@
-# Table of content
+# Table of Contents
 - [Mandatory](#mandatory)
   - [What Is Virtual Machine](#what-is-virtual-machine)
     - [Why Virtual Machine](#why-virtual-machine)
@@ -9,6 +9,7 @@
     - [Commands That Help in Disk and Partition Checking](#commands-that-help-in-disk-and-partition-checking)
     - [The Directory Needed](#the-directory-needed)
     - [The Difference Between SI Units and IEC Units](#the-difference-between-si-units-and-iec-units)
+    - [Disk Size Recommended](#disk-size-recommended)
   - [Hostname](#hostname)
     - [Naming Rules](#naming-rules)
     - [How to View Your Hostname](#how-to-view-your-hostname)
@@ -69,7 +70,7 @@
       - [Config SSHD](#config-sshd)
       - [Checking SSHD Config](#checking-sshd-config)
     - [Connect to VM SSH](#connect-to-vm-ssh)
-      - [The Meaning VirtualBox Port Forwarding Fields](#the-meaning-virtualbox-port-forwarding-fields)
+      - [The Meaning of VirtualBox Port Forwarding Fields](#the-meaning-of-virtualbox-port-forwarding-fields)
       - [Steps to Connect](#steps-to-connect)
   - [UFW](#ufw)
     - [UFW Installation](#ufw-installation)
@@ -78,13 +79,51 @@
   - [Cron](#cron)
     - [Command to Check the Cron Manual](#command-to-check-the-cron-manual)
     - [Cron Rules](#cron-rules)
-      - [Special Symbols and Examples:](#special-symbols-and-examples)
+      - [Special Symbols and Examples](#special-symbols-and-examples)
     - [How to Set Up Cron](#how-to-set-up-cron)
       - [Option A: Root’s Crontab](#option-a-roots-crontab)
-        - [Other Crontab Commands:](#other-crontab-commands)
+        - [Other Crontab Commands](#other-crontab-commands)
       - [Option B: System Files /etc/cron.d (Optional)](#option-b-system-files-etccrond-optional)
     - [Checking Whether Cron Is Active](#checking-whether-cron-is-active)
     - [Interrupt Cron](#interrupt-cron)
+- [Bonus](#bonus)
+  - [lighttpd](#lighttpd)
+    - [lighttpd Installation](#lighttpd-installation)
+    - [Checking lighttpd Installation](#checking-lighttpd-installation)
+    - [Allow Port 80 in UFW](#allow-port-80-in-ufw)
+    - [Checking Connection](#checking-connection)
+  - [PHP](#php)
+    - [PHP Installation](#php-installation)
+    - [Connect lighttpd to PHP](#connect-lighttpd-to-php)
+    - [Restart lighttpd Service](#restart-lighttpd-service)
+    - [Testing the Connection](#testing-the-connection)
+    - [Why a Protocol at All](#why-a-protocol-at-all)
+  - [MariaDB](#mariadb)
+    - [MariaDB Installation](#mariadb-installation)
+    - [MariaDB Secure Installation](#mariadb-secure-installation)
+      - [What Is Secure Installation](#what-is-secure-installation)
+      - [Steps of Secure Installation](#steps-of-secure-installation)
+    - [Checking After the Secure Installation](#checking-after-the-secure-installation)
+    - [Create WordPress Database and Account](#create-wordpress-database-and-account)
+    - [Check After Creating User and Granting Privileges](#check-after-creating-user-and-granting-privileges)
+  - [WordPress](#wordpress)
+    - [WordPress Installation](#wordpress-installation)
+    - [Extract It Into the Web Folder](#extract-it-into-the-web-folder)
+    - [Set Owner to www-data](#set-owner-to-www-data)
+    - [Create wp-config.php](#create-wp-configphp)
+      - [What Is wp-config.php](#what-is-wp-configphp)
+      - [Steps to Create wp-config.php](#steps-to-create-wp-configphp)
+  - [fail2ban](#fail2ban)
+    - [How It Works, Step by Step](#how-it-works-step-by-step)
+    - [Where Its Files Live](#where-its-files-live)
+    - [Limitations](#limitations)
+    - [Terms to Know](#terms-to-know)
+    - [fail2ban Installation](#fail2ban-installation)
+    - [Checking Active Jails](#checking-active-jails)
+    - [The Problem to Fix: The Port](#the-problem-to-fix-the-port)
+    - [Check and Apply](#check-and-apply)
+    - [Check and Modify the maxretry, findtime, and bantime](#check-and-modify-the-maxretry-findtime-and-bantime)
+    - [Safe Ban Test](#safe-ban-test)
 
 # Mandatory
 
@@ -159,10 +198,10 @@ Both measure amounts of data, but they count in different ways:
 - `GB`, `MB`, `KB` *(SI units)*: count in powers of 10. Each step is ×1000.
 - `GiB`, `MiB`, `KiB` *(IEC units)*: count in powers of 2. Each step is ×1024.
 
-### Disk Size Recommented
+### Disk Size Recommended
 
-| Area | Current size | Used | Size Recommented |
-|---|---|---|---|---|---|
+| Area | Current size | Used | Recommended size |
+|---|---|---|---|
 | `/boot` | 499M | 140M | **500M** |
 | `/` | 10G | 1.1G | **4G** |
 | swap | 2.3G | 0 | **1G** |
@@ -727,7 +766,7 @@ How the connection reaches the VM's SSH server:
 ```
 B or A  --->  Host IP : Host Port  --->  VirtualBox  --->  Guest IP : Guest Port (sshd in the VM)
 ```
-#### The Meaning VirtualBox Port Forwarding Fields
+#### The Meaning of VirtualBox Port Forwarding Fields
 
 | Field | Meaning | Required? | Value for your project |
 |---|---|---|---|
@@ -827,7 +866,7 @@ minute  hour  day  month  weekday  command
 | Month | 1 to 12 |
 | Day of week | 0 to 7 (0 and 7 are both Sunday) |
 
-#### Special Symbols and Examples:
+#### Special Symbols and Examples
 | Written | Runs |
 |---|---|
 | `* * * * *` | Every minute |
@@ -855,7 +894,7 @@ Lines to write:
 */10 * * * *      /home/hukhaw/monitoring.sh
 ```
 
-##### Other Crontab Commands:
+##### Other Crontab Commands
 | Command | Does |
 |---|---|
 | `sudo crontab -l` | Lists root's current jobs |
@@ -893,28 +932,28 @@ Lines to write:
 # Bonus
 
 ## lighttpd
-`lighttpd` is a web server: a program that listens on a port, receives requests from browsers, and sends back files or pages. It’s known for being light on memory and CPU, which suits a small VM. By itself, lighttpd only serves static files (HTML, images). Running WordPress needs PHP connected to it,which is the next step.
+`lighttpd` is a web server: a program that listens on a port, receives requests from browsers, and sends back files or pages. It’s known for being light on memory and CPU, which suits a small VM. By itself, lighttpd only serves static files (HTML, images). Running WordPress needs PHP connected to it, which is the next step.
 
 ### lighttpd Installation
 ```
 sudo apt install lighttpd
 ```
 
-### Checking lighttpd installation
+### Checking lighttpd Installation
 | Check | Command | What you want to see |
 |---|---|---|
 | Running? | `systemctl status lighttpd` | `active (running)` |
 | Starts at boot? | `systemctl is-enabled lighttpd` | `enabled` |
 | Listening? | `sudo ss -tunlp \| grep lighttpd` | A listener on port **80** (IPv4 and IPv6) |
 
-### Allow port 80 in ufw
+### Allow Port 80 in UFW
 
 ```
 sudo ufw allow 80/tcp
 sudo ufw status verbose
 ```
 
-> As the subject's idea is leaving open only what you needed, and lighttpd is only using tcp, so we use `80/tcp`.
+> The subject's idea is to leave open only what you need. lighttpd only uses TCP, so we use `80/tcp`.
 
 ### Checking Connection
 - Add a VirtualBox forwarding rule: a host port other than 8080 (which your SSH rule uses) to guest port 80.
@@ -950,7 +989,7 @@ sudo lighty-enable-mod fastcgi fastcgi-php
 | 2 | `sudo systemctl restart lighttpd` | No error output |
 | 3 | `systemctl status lighttpd` | `active (running)`. Check the start time is **just now**. |
 
-### Testing the connection
+### Testing the Connection
 ```
 sudo echo '<?php phpinfo();' > /var/www/html/info.php
 ```
@@ -960,9 +999,9 @@ sudo echo '<?php phpinfo();' > /var/www/html/info.php
 | `echo ... \| sudo tee file` | **Yes** | `tee` does the writing, with root |
 | `sudo nano file` | Yes | The editor runs as root |
 
-> After testing have to delete the test file with command `sudo rm /var/www/html/info.php`
+> After testing, delete the test file with the command `sudo rm /var/www/html/info.php`
 
-### Why a protocol at all
+### Why a Protocol at All
 `lighttpd` can only serve files. It can’t run PHP code itself, so it needs to pass .php requests to PHP:
 
 ```
@@ -978,13 +1017,13 @@ MariaDB is an open-source relational database management system (RDBMS). It is e
 ```
 sudo apt install mariadb-server
 systemctl status mariadb
-sudo ss -tunlp | grep "mariadb|mysql"
+sudo ss -tunlp | grep -E "mariadb|mysql"
 ```
 > You want a version of 10.11 or newer, active (running), and a listener on 127.0.0.1:3306 only.
 
 ### MariaDB Secure Installation
 
-#### What is Secure Installation
+#### What Is Secure Installation
 A fresh database install is set up for convenience, so it’s easy to get started. The mariadb-secure-installation script switches a few of those conveniences off before real use.
 | Item | Why it's a risk | What the script does |
 |---|---|---|
@@ -994,9 +1033,9 @@ A fresh database install is set up for convenience, so it’s easy to get starte
 | **Root password / authentication** | The database's root account is the key to everything | Lets you set or confirm how root logs in |
 | **Reload privilege tables** | Changes might not apply until the server reads them again | Applies them now |
 
-#### Step of Secure Installation
+#### Steps of Secure Installation
 ```
-sudp mariadb-secure-installation
+sudo mariadb-secure-installation
 ```
 | Prompt | What it means | Sensible answer |
 |---|---|---|
@@ -1023,12 +1062,14 @@ sudo mariadb
 ```
 You should see MariaDB [(none)]>.
 
-*Run following statements, one at a time*:
+*Run the following statements, one at a time*:
 Pick your own names and a strong password.
 ```
 CREATE DATABASE wordpress_db;
 CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'your_password';
 GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wp_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 | Statement | What it does |
 |---|---|
@@ -1037,7 +1078,7 @@ GRANT ALL PRIVILEGES ON wordpress_db.* TO 'wp_user'@'localhost';
 | `GRANT ... ON wordpress_db.*` | Gives that account full rights on **this one database only** |
 | `FLUSH PRIVILEGES` | Makes the server re-read permissions |
 
-### CHECK after Created User and Grant Privileges
+### Check After Creating User and Granting Privileges
 ```
 sudo mariadb -e "SHOW DATABASES;"
 sudo mariadb -e "SHOW GRANTS FOR 'wp_user'@'localhost';"
@@ -1049,14 +1090,14 @@ mariadb -u wp_user -p wordpress_db
 ## WordPress
 
 ### WordPress Installation
-Since the `wget` will download things in current directory, so go to `/tmp` first.
+Since `wget` downloads files into the current directory, go to `/tmp` first.
 ```
 cd /tmp
 wget https://wordpress.org/latest.tar.gz
 ls -lh latest.tar.gz  // to check the size of the file
 ```
 
-### Extract it into the Web folder
+### Extract It Into the Web Folder
 ```
 sudo tar -xzf latest.tar.gz -C /var/www/html --strip-components=1
 ```
@@ -1070,13 +1111,13 @@ sudo tar -xzf latest.tar.gz -C /var/www/html --strip-components=1
 | `--strip-components=1` | The archive has one top folder, `wordpress/`. This drops it, so the files go **directly** into `/var/www/html` instead of `/var/www/html/wordpress/`. |
 
 ### Set Owner to www-data
-Every file has an owner, a group, and permissions for three classes: owner, group, and everyone else (others). When user using `wget` to download file, the owner of the file will be the user. In order to pass the owner to `www-data`, you need to:
+Every file has an owner, a group, and permissions for three classes: owner, group, and everyone else (others). When a user downloads a file with `wget`, that user becomes the owner of the file. To pass the ownership to `www-data`, run:
 
 ```
 sudo chown -R www-data:www-data /var/www/html
 ls -l /var/www/html
 ```
-> This command make www-data the owner (and group) of /var/www/html and everything inside it.
+> This command makes www-data the owner (and group) of /var/www/html and everything inside it.
 
 | Part | Meaning |
 |---|---|
@@ -1087,10 +1128,10 @@ ls -l /var/www/html
 
 ### Create `wp-config.php`
 
-#### what is `wp-config.php`
+#### What Is `wp-config.php`
 wp-config.php is WordPress’s settings file. It tells WordPress how to reach the database. WordPress is only PHP code, so on its own it has no idea that a database called wordpress_db exists, what the account is called, or what the password is. This file holds that information.
 
-#### Step to create `wp-config.php`
+#### Steps to Create `wp-config.php`
 
 ```
 cd /var/www/html
@@ -1111,9 +1152,9 @@ Then restrict who can read it, since it contains the database password:
 sudo chmod 640 /var/www/html/wp-config.php
 ls -l /var/www/html/wp-config.php
 ```
-> Then open http://127.0.0.1:<your host port>/ in your browser. You should see WordPress’s setup page (a language choice), not a database error. Setting uo with chosing langause, site name and so on.
+> Then open http://127.0.0.1:<your host port>/ in your browser. You should see WordPress’s setup page (a language choice), not a database error. Then set it up by choosing the language, site name and so on.
 
-> Remove the `/var/www/html/index.lighttpd.html`. This is lighttpd’s default placeholder page, installed by the package so you’d see something right after installing. It has nothing to do with WordPress, and your site doesn’t need it
+> Remove the `/var/www/html/index.lighttpd.html`. This is lighttpd’s default placeholder page, installed by the package so you’d see something right after installing. It has nothing to do with WordPress, and your site doesn’t need it.
 
 > After that, check with command `mariadb -u wp_user -p wordpress_db -e "SHOW TABLES;"`
 
@@ -1128,7 +1169,7 @@ fail2ban is a program that runs in the background and does three things:
 
 It doesn’t stop the attack program from trying. It cuts the connection, so the guessing can’t continue.
 
-### How it works, step by step
+### How It Works, Step by Step
 ```
 Attacker  →  SSH port  →  sshd logs "Failed password from 1.2.3.4"
                                     ↓
@@ -1144,7 +1185,7 @@ Attacker  →  SSH port  →  sshd logs "Failed password from 1.2.3.4"
 ```
 Notice it works after the fact, from log lines. The first few attempts always go through, and the ban comes only after the limit is reached.
 
-### Where its files live
+### Where Its Files Live
 | Path | Role |
 |---|---|
 | `/etc/fail2ban/jail.conf` | The default settings. **Don't edit it**, since a package update may overwrite it. |
@@ -1183,8 +1224,8 @@ systemctl status fail2ban
 sudo fail2ban-client status
 ```
 
-### The problem to fix: the port
-Check with the commnad `grep -n -A8 '^\[sshd\]' /etc/fail2ban/jail.conf`, you will see the `port=ssh`, which *cover port 22 not 4242*. So we have to change it with .config.
+### The Problem to Fix: The Port
+Check with the command `grep -n -A8 '^\[sshd\]' /etc/fail2ban/jail.conf`, you will see the `port=ssh`, which *covers port 22, not 4242*. So we have to override it in a local config file.
 
 ```
 sudo nano /etc/fail2ban/jail.d/custom.local
@@ -1213,17 +1254,17 @@ sudo fail2ban-client get sshd bantime   // 600 (600 seconds)
 ```
 
 *Modify:*
-File to modified: `jail.d/custom.local`
+File to modify: `jail.d/custom.local`
 ```
 [sshd]
 port = 4242
 // add lines under sshd e.g:
 maxretry = 3
 findtime = 600 (or 10m / 15m)
-bantie = 900 (or 15m / 20m)
+bantime = 900 (or 15m / 20m)
 ```
 
-### Safe ban test
+### Safe Ban Test
 A ban test checks that `fail2ban` can really *block an address*, and that the block applies to the right port. The normal way to trigger a ban is to fail several `SSH` logins from the same address. That’s unsafe on your VM, because every connection from your host computer looks like the same address, `10.0.2.2`. You’d ban your own host and lose your SSH access.
 
 The *safe* version doesn’t wait for failures. It tells fail2ban by hand: “ban this address now”, and the address is a fake one that doesn’t belong to anyone, so you can’t lock yourself out. Then you look at the firewall rules to see whether the ban was created correctly, and you undo it.
@@ -1231,7 +1272,7 @@ The *safe* version doesn’t wait for failures. It tells fail2ban by hand: “ba
 ```
 sudo fail2ban-client set sshd banip 203.0.113.5
 sudo nft list ruleset | grep -i -B2 -A2 4242
-sudo fail2ban-cliet status sshd
+sudo fail2ban-client status sshd
 sudo fail2ban-client set sshd unbanip 203.0.113.5
 ```
 
@@ -1246,11 +1287,13 @@ sudo fail2ban-client set sshd unbanip 203.0.113.5
 | | | `grep -i` | Search, ignoring upper/lower case |
 | | | `-B2 -A2` | Also show 2 lines **B**efore and 2 lines **A**fter each match |
 | | | `4242` | The text to look for (your SSH port) |
-| 3 | `sudo fail2ban-client set sshd unbanip 203.0.113.5` | `unbanip` | **Removes** the ban from step 1 (the rest is the same as command 1) |
+| 3 | `sudo fail2ban-client status sshd` | `status sshd` | Shows the state of the `sshd` jail: failure counts and the list of banned IPs |
+| 4 | `sudo fail2ban-client set sshd unbanip 203.0.113.5` | `unbanip` | **Removes** the ban from step 1 (the rest is the same as command 1) |
 
 *What each command is for:*
 | # | Purpose | What you expect to see |
 |---|---|---|
 | 1 | **Cause**: create a ban by hand | It prints `1` (one address banned) |
 | 2 | **Observe**: read the firewall rules | A rule with `tcp dport 4242` and the banned-address set, which proves the ban covers your SSH port |
-| 3 | **Clean up**: undo the ban | It prints `1` (one address unbanned) |
+| 3 | **Confirm**: check the jail | `203.0.113.5` appears in the `Banned IP list` |
+| 4 | **Clean up**: undo the ban | It prints `1` (one address unbanned) |
