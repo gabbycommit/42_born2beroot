@@ -1189,6 +1189,26 @@ sudo systemctl restart fail2ban   // restart fail2ban
 sudo fail2ban-client status sshd  // check the jail status
 ```
 
+### Check and Modify the `maxretry`, `findtime`, and `bantime`
+
+*Checking:*
+```
+sudo fail2ban-client get sshd maxretry  // 5 (5 times)
+sudo fail2ban-client get sshd findtime  // 600 (600 seconds)
+sudo fail2ban-client get sshd bantime   // 600 (600 seconds)
+```
+
+*Modify:*
+File to modified: `jail.d/custom.local`
+```
+[sshd]
+port = 4242
+// add lines under sshd e.g:
+maxretry = 3
+findtime = 600 (or 10m / 15m)
+bantie = 900 (or 15m / 20m)
+```
+
 ### Safe ban test
 A ban test checks that `fail2ban` can really *block an address*, and that the block applies to the right port. The normal way to trigger a ban is to fail several `SSH` logins from the same address. That’s unsafe on your VM, because every connection from your host computer looks like the same address, `10.0.2.2`. You’d ban your own host and lose your SSH access.
 
@@ -1197,6 +1217,7 @@ The *safe* version doesn’t wait for failures. It tells fail2ban by hand: “ba
 ```
 sudo fail2ban-client set sshd banip 203.0.113.5
 sudo nft list ruleset | grep -i -B2 -A2 4242
+sudo fail2ban-cliet status sshd
 sudo fail2ban-client set sshd unbanip 203.0.113.5
 ```
 
