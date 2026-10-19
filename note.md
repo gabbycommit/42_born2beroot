@@ -159,6 +159,20 @@ Both measure amounts of data, but they count in different ways:
 - `GB`, `MB`, `KB` *(SI units)*: count in powers of 10. Each step is ×1000.
 - `GiB`, `MiB`, `KiB` *(IEC units)*: count in powers of 2. Each step is ×1024.
 
+### Disk Size Recommented
+
+| Area | Current size | Used | Size Recommented |
+|---|---|---|---|---|---|
+| `/boot` | 499M | 140M | **500M** |
+| `/` | 10G | 1.1G | **4G** |
+| swap | 2.3G | 0 | **1G** |
+| `/home` | 5G | 1.4M | **2G** |
+| `/var` | 3G | 547M | **2G** |
+| `/var/log` | 4G | 49M | **1G** |
+| `/srv` | 3G | 792K | **1G** |
+| `/tmp` | 3G | 35M | **1G** |
+| extra |     |     |    **2G**    |
+
 ---
 
 ## Hostname
