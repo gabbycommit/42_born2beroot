@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 # architecture
 arch=$(uname -a)
 
@@ -10,12 +12,12 @@ vcpu=$(nproc)
 # RAM
 total_ram=$(free --mega | awk 'NR==2 {print $2}')
 used_ram=$(free --mega | awk 'NR==2 {print $3}')
-percent_ram=$(awk -v t=$total_ram -v u=$used_ram 'BEGIN {print u/t*100}')
+percent_ram=$(awk -v t=$total_ram -v u=$used_ram 'BEGIN {printf "%.2f", u/t*100}')
 
 # Disk
 total_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $2} END {print sum}')
 used_disk=$(df -BMB | grep "^/dev/" | awk '{sum += $3} END {print sum}')
-percent_disk=$(awk -v $total_disk -v $used_disk 'BEGIN {printf ".0f", u/t*100}')
+percent_disk=$(awk -v t=$total_disk -v u=$used_disk 'BEGIN {printf "%.0f", u/t*100}')
 
 # cpu load
 cpu_load=$(vmstat 1 2 | tail -1 | awk '{printf "%.1f", 100 - $15}')
@@ -26,7 +28,7 @@ last_boot=$(who -b | awk '{print $3, $4}')
 # lvm use
 nlvm=$(lsblk -o TYPE | grep -c "^lvm")
 is_lvm="no"
-if [ nlvm -ge 1 ]; then
+if [ "$nlvm" -ge 1 ]; then
     is_lvm="yes"
 fi
 
@@ -53,6 +55,6 @@ wall "#Architecture: $arch
 #LVM use: $is_lvm
 #TCP Connections: $tcp_connections ESTABLISHED
 #User log: $user_log
-#Network: IP
+#Network: IP $ip ($mac)
 #Sudo: $cmd_count cmd
 "
