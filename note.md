@@ -957,7 +957,7 @@ sudo ufw status verbose
 
 ### Checking Connection
 - Add a VirtualBox forwarding rule: a host port other than 8080 (which your SSH rule uses) to guest port 80.
-- Test in the browser: http://127.0.0.1:<host port> should show lighttpd’s placeholder page.
+- Test in the browser: http://127.0.0.1:hostport should show lighttpd’s placeholder page.
 
 ---
 
