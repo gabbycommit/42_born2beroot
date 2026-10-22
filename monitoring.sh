@@ -43,7 +43,7 @@ ip=$(hostname -I | awk '{print $1}')
 mac=$(ip addr | grep "link/ether" | awk '{print $2}')
 
 # sudo cmd count
-cmd_count=$(journalctl _COMM=sudo | grep "COMMAND=" | wc -l)
+cmd_count=$(grep -c "COMMAND=" /var/log/sudo/sudo_log)
 
 wall "#Architecture: $arch
 #Physical CPU: $fcpu
